@@ -1,10 +1,21 @@
 """Octa suite: the common login page and app launcher for all Octa Insight apps."""
 import html
+import sys
+import time
 
-import pandas as pd
-import streamlit as st
+_T0 = time.time()
+
+
+def _log(msg):  # progress lines in the Streamlit Cloud log ("Manage app"), to find where a page stops
+    print(f"[octa-suite] {time.time() - _T0:5.2f}s {msg}", file=sys.stderr, flush=True)
+
+
+_log("script started")
+import pandas as pd  # noqa: E402
+import streamlit as st  # noqa: E402
 
 st.set_page_config(page_title="Octa suite", page_icon="🔷", layout="wide")
+_log("page config set")
 
 from octa_auth import App, FAMILIES, client, display_name, require_login, with_session, logout, flash  # noqa: E402
 from octa_auth.ui import FAMILY_HELP, _show_flash, _state  # noqa: E402
@@ -21,7 +32,9 @@ st.markdown("""<style>
 .octa-tag{font-size:.72rem;color:#52514e;border:1px solid #d9d7d1;border-radius:9px;padding:0 7px;margin-left:6px}
 </style>""", unsafe_allow_html=True)
 
+_log(f"secrets found: {client.enabled()}; checking login")
 user = require_login(PORTAL)
+_log("signed in")
 if user is None:   # no user database configured (local copy without secrets)
     st.error("The Octa user database is not configured. Add the [octa_users] section to the Streamlit secrets.")
     st.stop()
@@ -207,3 +220,4 @@ with st.sidebar:
                 "© 2026 Octa Insight · Produced by Octa Systems</div>", unsafe_allow_html=True)
 
 pages[choice]()
+_log(f"page '{choice}' drawn")
