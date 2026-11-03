@@ -7,7 +7,10 @@ _T0 = time.time()
 
 
 def _log(msg):  # progress lines in the Streamlit Cloud log ("Manage app"), to find where a page stops
-    print(f"[octa-suite] {time.time() - _T0:5.2f}s {msg}", file=sys.stderr, flush=True)
+    try:
+        print(f"[octa-suite] {time.time() - _T0:5.2f}s {msg}", file=sys.stderr, flush=True)
+    except Exception:       # the log may be closed; never let logging break the page
+        pass
 
 
 _log("script started")
