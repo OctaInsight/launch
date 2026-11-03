@@ -41,11 +41,20 @@ if user is None:   # no user database configured (local copy without secrets)
 tok = _state()["token"]
 
 
+def catalogue(fresh=False):
+    """The app list for this user, kept for 30 s so clicks do not wait for the database each time."""
+    c = st.session_state.get("_octa_cat")
+    if fresh or not c or c[0] != tok or time.time() - c[1] > 30:
+        c = (tok, time.time(), client.catalogue(tok))
+        st.session_state["_octa_cat"] = c
+    return c[2]
+
+
 def page_apps():
     st.markdown(f"## Welcome, {html.escape(display_name(user))}")
     _show_flash()
     try:
-        cat = client.catalogue(tok)
+        cat = catalogue()
     except client.OctaError as e:
         st.error(str(e))
         return
@@ -86,6 +95,7 @@ def _card(a):
         if st.button("Request access", key=f"ask_{a['id']}", use_container_width=True):
             try:
                 r = client.request_access(tok, a["id"])
+                st.session_state.pop("_octa_cat", None)
                 flash("success" if r.get("ok") else "error",
                       f"Your request for {a['name']} was sent." if r.get("ok") else r.get("error"))
             except client.OctaError as e:
@@ -143,7 +153,7 @@ def page_account():
                 r = client.change_password(tok, old, new)
                 st.success("Password changed.") if r.get("ok") else st.error(r.get("error"))
     try:
-        cat = client.catalogue(tok)
+        cat = catalogue()
         used = [(a["name"], FAMILIES[a["family"]], a["uses"]) for a in cat.get("apps", []) if a.get("uses")]
         if used:
             st.markdown("**Your use of Octa apps (last 180 days)**")
@@ -170,6 +180,7 @@ def page_admin():
         for col, label, status in ((c2, "Approve", "granted"), (c3, "Decline", "revoked")):
             if col.button(label, key=f"{status}_{q['user_id']}_{q['app_id']}"):
                 client.admin(tok, action="set_access", user_id=q["user_id"], app_id=q["app_id"], status=status)
+                st.session_state.pop("_octa_cat", None)
                 flash("success", f"{label}d: {q['email']} → {q['app']}")
                 st.rerun()
     st.markdown("### Users")
@@ -180,7 +191,7 @@ def page_admin():
         st.dataframe(df[["name", "username", "email", "affiliation", "status", "role", "last_login_at", "apps"]],
                      hide_index=True, use_container_width=True)
         st.markdown("**Change access**")
-        cat = {a["id"]: a["name"] for a in client.catalogue(tok).get("apps", [])}
+        cat = {a["id"]: a["name"] for a in catalogue().get("apps", [])}
         c1, c2, c3, c4 = st.columns([3, 3, 2, 1])
         who = c1.selectbox("User", [x["user_id"] for x in users],
                            format_func=lambda i: next(f"{x['email']} ({x['username']})" for x in users if x["user_id"] == i))
