@@ -2,7 +2,7 @@
 
 This repository holds:
 
-- **`app.py`**: the common Octa suite page. It has login, registration and forgotten username/password pages. After login it shows every Octa app, grouped as CloudEARTHi-Octa apps, Octa scientific apps and Octa games. The group the user uses most comes first, and groups are separated by horizontal bars. Apps the user cannot open are greyed out, with **Request access** or **Coming soon**. Administrators also get an *Administration* page to approve access requests, grant or revoke access, and suspend accounts.
+- **`app.py`**: the common Octa suite page. It has login, registration and forgotten username/password pages. After login it shows every Octa app, grouped as CloudEARTHi-Octa apps, Octa scientific apps, Innovation, Education and Training apps, and Octa games. Groups and the apps inside them are ordered by the user's own use, then by all users' use (last 6 months), and groups are separated by horizontal bars. Apps the user cannot open are greyed out, with **Request access** or **Coming soon**. Administrators also get an *Administration* page to approve access requests, grant or revoke access, and suspend accounts.
 - **`octa_auth/`**: the shared Python module every Octa app copies in. It gives each app its own login/register page, which writes to the same user database. It also provides the sidebar buttons (**Log in**, **Log out**, **Octa suite**) and sends emails through Gmail.
 - **`supabase/migrations/`**: the user database (tables `User_*`, functions `octa_user_*`) in the Supabase project *Octa_projects*.
 
@@ -11,6 +11,7 @@ This repository holds:
 - **One account** works in every app. The fields asked for depend on the app:
   - scientific apps ask for name, email, username, password, affiliation and a scientific profile;
   - CloudEARTHi apps also ask for social media, affiliated institutes, projects, and which apps the user needs;
+  - innovation, education and training apps ask for the type of organisation, LinkedIn and topics;
   - games ask for a player name.
 - **Passwords** are bcrypt hashes and are checked inside the database. The apps never read the user tables. They call only the `octa_user_*` functions with the publishable key.
 - **Sessions** are carried in the address bar (`?session=…`):

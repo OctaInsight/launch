@@ -127,3 +127,35 @@ def test_logout(db):
     assert "session" not in at.query_params
     assert any(b.label == "Log in" for b in at.button)
     assert not db.sessions
+
+
+def test_four_groups_ordered_by_use(db):
+    uid = db.add_user("ann@x.org", "ann", "Secret-123", first_name="Ann")
+    other = db.add_user("bo@x.org", "bo", "Secret-123")
+    db.usage += [(other, "octa_matchmaking", "active")] * 9          # everyone's use
+    at = _at({"session": db._new_session(uid)})
+    heads = [m.value for m in at.main.markdown if m.value.startswith("### ")]
+    assert heads[0] == "### Innovation, Education and Training apps"     # nobody else used anything
+    assert len(heads) == 4
+    db.usage += [(uid, "igneosuite", "active")] * 3                   # Ann's own use comes first
+    at = _at({"session": db._new_session(uid)})
+    heads = [m.value for m in at.main.markdown if m.value.startswith("### ")]
+    assert heads[:2] == ["### Octa scientific apps", "### Innovation, Education and Training apps"]
+    assert any("You opened it" in m.value for m in at.markdown)
+
+
+def test_register_education_profile(db):
+    at = _at()
+    _btn(at, "New here? Create an account").click().run()
+    at.radio(key="octa_reg_family").set_value("education").run()
+    vals = {"First name *": "Ed", "Family name *": "U", "Email *": "ed@x.org", "Username *": "edu",
+            "Password *": "Secret-123", "Repeat password *": "Secret-123",
+            "Affiliation (university, institute or company) *": "UiT"}
+    for t in at.text_input:
+        if t.label in vals:
+            t.input(vals[t.label])
+    at.text_area[0].input("STEM education\nCircular economy")
+    _btn(at, "Create account").click().run()
+    assert not at.exception, at.exception
+    u = next(iter(db.users.values()))
+    assert u["profiles"]["education"]["interests"] == ["STEM education", "Circular economy"]

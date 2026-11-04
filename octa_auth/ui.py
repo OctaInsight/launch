@@ -26,11 +26,13 @@ from . import client, mail
 FAMILIES = {
     "cloudearthi": "CloudEARTHi-Octa apps",
     "science": "Octa scientific apps",
+    "education": "Innovation, Education and Training apps",
     "games": "Octa games",
 }
 FAMILY_HELP = {
     "cloudearthi": "Proposals and funded projects: partners, proposals, KPIs, project progress, finances, risks, hours and tasks",
     "science": "Open scientific tools, such as IgneoSuite for igneous geochemistry",
+    "education": "Matchmaking and tools for innovation, education and training projects and events",
     "games": "Octa games (coming soon)",
 }
 RECHECK_SECONDS = 60
@@ -274,7 +276,7 @@ def _register_form(app: App):
     if app.id == "portal":
         family = st.radio("Which Octa apps are you mainly here for?", list(FAMILIES), format_func=FAMILIES.get,
                           captions=[FAMILY_HELP[f] for f in FAMILIES], key="octa_reg_family")
-    req = family in ("science", "cloudearthi")
+    req = family in ("science", "cloudearthi", "education")
     with st.form("octa_register"):
         c1, c2 = st.columns(2)
         first = c1.text_input("First name *")
@@ -312,6 +314,14 @@ def _register_form(app: App):
             default = [app.id] if app.id in names else []
             asked = st.multiselect("Apps you need access to (an Octa administrator approves each one)",
                                    list(names), default=default, format_func=names.get)
+        elif family == "education":
+            st.markdown("**Innovation, education and training profile**")
+            c5, c6 = st.columns(2)
+            profile["organisation_type"] = c5.selectbox(
+                "Type of organisation", ["", "University or school", "Research institute", "Company or start-up",
+                                         "Public body", "NGO or association", "Other"])
+            profile["linkedin"] = c6.text_input("LinkedIn")
+            profile["interests"] = st.text_area("Topics you work on or want partners for (one per line)", height=80)
         elif family == "games":
             profile["nickname"] = st.text_input("Player name")
         ok = st.form_submit_button("Create account", type="primary", use_container_width=True)
@@ -333,7 +343,7 @@ def _register_form(app: App):
     if problems:
         st.error("Please give " + ", ".join(problems) + ".")
         return
-    for k in ("institutes", "projects"):
+    for k in ("institutes", "projects", "interests"):
         if k in profile:
             profile[k] = [x.strip() for x in profile[k].splitlines() if x.strip()]
     profile = {k: (v.strip() if isinstance(v, str) else v) for k, v in profile.items() if v}

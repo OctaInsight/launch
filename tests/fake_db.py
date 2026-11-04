@@ -13,6 +13,8 @@ APPS = [
          url="https://octakpi.streamlit.app/", status="live", access_mode="approval", group_label="Proposal Suite"),
     dict(id="octa_hours", family="cloudearthi", name="Working Hours", description="Hours", icon="⏱️",
          url="https://working-hours.streamlit.app", status="live", access_mode="approval", group_label="People"),
+    dict(id="octa_matchmaking", family="education", name="Matchmaking", description="Partners", icon="🤝",
+         url="https://matchmaking.example/", status="live", access_mode="open", group_label="Innovation"),
     dict(id="octa_game_1", family="games", name="Octa game", description="Soon", icon="🎮", url="",
          status="construction", access_mode="open", group_label="Games"),
 ]
@@ -87,10 +89,13 @@ class FakeDB:
         uid = self._uid(p_token)
         mine = self._pub(uid)["apps"] if uid else []
         uses = lambda i: sum(1 for x in self.usage if x[0] == uid and x[1] == i)  # noqa: E731
-        fam = {f: sum(uses(a["id"]) for a in APPS if a["family"] == f) for f in ("cloudearthi", "science", "games")}
-        order = sorted(fam, key=lambda f: (-fam[f], ["cloudearthi", "science", "games"].index(f)))
+        base = ["cloudearthi", "science", "education", "games"]
+        allu = lambda i: sum(1 for x in self.usage if x[1] == i)  # noqa: E731
+        fam = {f: sum(uses(a["id"]) for a in APPS if a["family"] == f) for f in base}
+        every = {f: sum(allu(a["id"]) for a in APPS if a["family"] == f) for f in base}
+        order = sorted(base, key=lambda f: (-fam[f], -every[f], base.index(f)))
         return dict(signed_in=bool(uid), family_order=order,
-                    apps=[dict(a, can_open=a["id"] in mine, uses=uses(a["id"]),
+                    apps=[dict(a, can_open=a["id"] in mine, uses=uses(a["id"]), everyone_uses=allu(a["id"]),
                                requested=self.access.get((uid, a["id"])) == "requested") for a in APPS])
 
     def request_access(self, p_token, p_app):

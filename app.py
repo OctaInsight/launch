@@ -63,6 +63,8 @@ def page_apps():
         return
     apps = cat.get("apps", [])
     order = cat.get("family_order") or list(FAMILIES)
+    st.caption("The groups and apps you use most come first; the order follows how you, and all Octa users, "
+               "use the apps.")
     first = True
     for fam in order:
         items = [a for a in apps if a["family"] == fam]
@@ -73,9 +75,10 @@ def page_apps():
         first = False
         n_open = sum(a["can_open"] and a["status"] == "live" for a in items)
         st.markdown(f"### {FAMILIES[fam]}")
-        st.caption(f"{FAMILY_HELP[fam]} · you can open {n_open} of {len(items)}")
-        # the apps the user uses most come first, then the catalogue order
-        items.sort(key=lambda a: (not (a["can_open"] and a["status"] == "live"), -a.get("uses", 0)))
+        st.caption(f"{FAMILY_HELP.get(fam, '')} · you can open {n_open} of {len(items)}")
+        # apps the user can open first; then the user's own use, everyone's use, and the catalogue order
+        items.sort(key=lambda a: (not (a["can_open"] and a["status"] == "live"), -a.get("uses", 0),
+                                  -a.get("everyone_uses", 0), a.get("sort_order", 100), a["name"]))
         cols = st.columns(3)
         for i, a in enumerate(items):
             with cols[i % 3]:
@@ -86,8 +89,10 @@ def _card(a):
     live = a["status"] == "live" and a.get("url")
     active = a["can_open"] and live
     tag = "" if a["status"] == "live" else "<span class='octa-tag'>coming soon</span>"
+    used = (f"<p style='margin-top:6px;font-size:.75rem;color:#2a78d6'>You opened it {a['uses']} "
+            f"time{'s' if a['uses'] != 1 else ''} in the last 6 months</p>" if a.get("uses") else "")
     st.markdown(f"<div class='octa-card{'' if active else ' off'}'><h4>{a['icon']} {html.escape(a['name'])}{tag}</h4>"
-                f"<p>{html.escape(a.get('description') or '')}</p></div>", unsafe_allow_html=True)
+                f"<p>{html.escape(a.get('description') or '')}</p>{used}</div>", unsafe_allow_html=True)
     if active:
         st.link_button("Open", with_session(a["url"]), use_container_width=True, type="primary")
     elif not live:
