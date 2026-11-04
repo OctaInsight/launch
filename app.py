@@ -74,7 +74,7 @@ def page_apps():
             st.divider()
         first = False
         n_open = sum(a["can_open"] and a["status"] == "live" for a in items)
-        st.markdown(f"### {FAMILIES[fam]}")
+        st.markdown(f"### {FAMILIES.get(fam, fam.title())}")
         st.caption(f"{FAMILY_HELP.get(fam, '')} · you can open {n_open} of {len(items)}")
         # apps the user can open first; then the user's own use, everyone's use, and the catalogue order
         items.sort(key=lambda a: (not (a["can_open"] and a["status"] == "live"), -a.get("uses", 0),
@@ -162,7 +162,7 @@ def page_account():
                 st.success("Password changed.") if r.get("ok") else st.error(r.get("error"))
     try:
         cat = catalogue()
-        used = [(a["name"], FAMILIES[a["family"]], a["uses"]) for a in cat.get("apps", []) if a.get("uses")]
+        used = [(a["name"], FAMILIES.get(a["family"], a["family"].title()), a["uses"]) for a in cat.get("apps", []) if a.get("uses")]
         if used:
             st.markdown("**Your use of Octa apps (last 180 days)**")
             st.dataframe(pd.DataFrame(used, columns=["App", "Group", "Visits"]).sort_values("Visits", ascending=False),
