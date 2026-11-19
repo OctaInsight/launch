@@ -226,16 +226,14 @@ def _email_check():
     st.markdown("### Email")
     kind = mail.provider()
     if kind == "resend":
-        c = st.secrets["email"]
+        c = mail.sender()
         st.caption(f"Emails are sent through **Resend** from {html.escape(c.get('from_name', 'Octa Insight'))} "
                    f"<{html.escape(c['from_email'])}>"
                    + (f", replies go to {html.escape(c['reply_to'])}" if c.get("reply_to") else "") + ".")
     elif kind == "gmail":
-        st.warning("Emails are still sent through **Gmail**. Add resend_api_key and from_email to the [email] "
-                   "section of the Streamlit secrets to use Resend.")
+        st.warning("Emails are still sent through **Gmail**. To use Resend: " + mail.diagnose())
     else:
-        st.warning("Email is not set up: welcome and forgot-password emails are not sent. Add the [email] section "
-                   "with resend_api_key and from_email to the Streamlit secrets.")
+        st.warning("Email is not set up: welcome and forgot-password emails are not sent. " + mail.diagnose())
         return
     if st.button("Send a test email to me"):
         try:
