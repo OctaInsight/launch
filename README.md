@@ -19,7 +19,7 @@ This repository holds:
   - a link from the Octa suite opens another app without a new password;
   - after **3 hours without activity** the session ends.
   - In the database only a hash of the token is kept (`User_sessions`).
-- **Forgotten username or password.** The app emails the user from octainsight@gmail.com:
+- **Forgotten username or password.** The app emails the user through Resend (the service the matchmaking platform uses):
   - if the email is unknown, the message says so and links to registration;
   - if it is known, the message shows the username and gives a one-hour link to a page for a new password (and, optionally, a new username).
   - After saving, the user logs in on the same app's login page. All old sessions end.
@@ -74,10 +74,16 @@ server_key = "…"                       # lets the app create password-reset li
 portal_url = "https://octa-suite.streamlit.app/"
 
 [email]
-user = "octainsight@gmail.com"
-app_password = "…"                     # Google account → Security → 2-Step Verification → App passwords
+resend_api_key = "re_…"                # Resend → API Keys (the matchmaking platform's key works)
+from_email = "accounts@…"              # an address on a domain verified in Resend
 from_name = "Octa Insight"
+reply_to = "…"                         # optional: where replies go
 ```
+
+Emails (welcome, forgot username/password) go through Resend's HTTPS API (`octa_auth/mail.py`). Without a Resend
+key the module falls back to Gmail if `user` and `app_password` are present. The Resend free plan allows 100 emails
+a day and 3,000 a month for the whole Resend account, shared with the matchmaking platform. In the Octa suite,
+**Administration → Email → Send a test email to me** checks the settings.
 
 ## Tests
 

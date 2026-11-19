@@ -22,6 +22,7 @@ _log("page config set")
 
 from octa_auth import App, FAMILIES, client, display_name, require_login, with_session, logout, flash  # noqa: E402
 from octa_auth.ui import FAMILY_HELP, _show_flash, _state  # noqa: E402
+from octa_auth import mail  # noqa: E402
 
 PORTAL = App(id="portal", name="Octa suite", family="science", url=client.setting("portal_url", ""),
              tagline="All Octa Insight apps in one place", icon="🔷")
@@ -217,6 +218,35 @@ def page_admin():
             client.admin(tok, action="set_status", user_id=who2, status=st2)
             flash("success", "Status updated.")
             st.rerun()
+    _email_check()
+
+
+def _email_check():
+    """Admins check that this app can send emails (welcome, forgot password) through Resend."""
+    st.markdown("### Email")
+    kind = mail.provider()
+    if kind == "resend":
+        c = st.secrets["email"]
+        st.caption(f"Emails are sent through **Resend** from {html.escape(c.get('from_name', 'Octa Insight'))} "
+                   f"<{html.escape(c['from_email'])}>"
+                   + (f", replies go to {html.escape(c['reply_to'])}" if c.get("reply_to") else "") + ".")
+    elif kind == "gmail":
+        st.warning("Emails are still sent through **Gmail**. Add resend_api_key and from_email to the [email] "
+                   "section of the Streamlit secrets to use Resend.")
+    else:
+        st.warning("Email is not set up: welcome and forgot-password emails are not sent. Add the [email] section "
+                   "with resend_api_key and from_email to the Streamlit secrets.")
+        return
+    if st.button("Send a test email to me"):
+        try:
+            with st.spinner("Sending…"):
+                mid = mail.send(user["email"], "Octa suite: test email",
+                                ["This is a test email from the Octa suite Administration page.",
+                                 "If you can read it, welcome and forgot-password emails work."])
+            st.success(f"Sent to {user['email']}" + (f" (Resend id {mid})" if mid else "")
+                       + ". Check the inbox and the spam folder.")
+        except mail.MailError as e:
+            st.error(str(e))
 
 
 pages = {"Apps": page_apps, "My account": page_account}
