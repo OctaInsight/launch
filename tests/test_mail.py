@@ -4,8 +4,15 @@ import sys
 
 import pytest
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from octa_auth import mail  # noqa: E402
+import importlib.util
+
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, ROOT)
+# A private copy of octa_auth/mail.py: other test helpers replace mail.send in the shared module, and this file must
+# test the real function without changing what those tests use.
+_spec = importlib.util.spec_from_file_location("octa_mail_under_test", os.path.join(ROOT, "octa_auth", "mail.py"))
+mail = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(mail)
 
 
 class Resp:
