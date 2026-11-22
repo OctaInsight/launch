@@ -159,3 +159,15 @@ def test_register_education_profile(db):
     assert not at.exception, at.exception
     u = next(iter(db.users.values()))
     assert u["profiles"]["education"]["interests"] == ["STEM education", "Circular economy"]
+
+
+def test_octa_logo_at_the_bottom_of_the_sidebar(db):
+    db.add_user("lia@x.org", "lia", "Secret-123", first_name="Lia")
+    at = _at()
+    at.text_input[0].input("lia")
+    at.text_input[1].input("Secret-123")
+    _btn(at, "Log in").click().run()
+    assert not at.exception
+    side = [m.value for m in at.sidebar.markdown]
+    footer = next(i for i, v in enumerate(side) if "© 2026 Octa Insight · Produced by Octa Systems" in v)
+    assert "data:image/png;base64," in side[footer + 1] and "alt='Octa Insight'" in side[footer + 1]

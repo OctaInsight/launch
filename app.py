@@ -1,4 +1,6 @@
 """Octa suite: the common login page and app launcher for all Octa Insight apps."""
+import base64
+from pathlib import Path
 import html
 import sys
 import time
@@ -265,6 +267,10 @@ with st.sidebar:
     st.divider()
     st.markdown(f"<div style='font-size:.8rem;color:#52514e'><b style='color:#0b0b0b'>Octa suite {VERSION}</b><br>"
                 "© 2026 Octa Insight · Produced by Octa Systems</div>", unsafe_allow_html=True)
+    _logo = Path(__file__).parent / "octa_auth" / "octa_logo.png"
+    if _logo.exists():   # full-resolution logo, scaled by the browser so it stays sharp on high-density screens
+        st.markdown(f"<img src='data:image/png;base64,{base64.b64encode(_logo.read_bytes()).decode()}' "
+                    "alt='Octa Insight' style='width:150px;height:auto;margin-top:8px'>", unsafe_allow_html=True)
 
 pages[choice]()
 _log(f"page '{choice}' drawn")
